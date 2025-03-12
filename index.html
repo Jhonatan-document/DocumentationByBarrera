@@ -250,6 +250,37 @@ function w3_close() {
     document.getElementById("mySidebar").style.display = "none";
     document.getElementById("myOverlay").style.display = "none";
 }
+document.addEventListener("DOMContentLoaded", function () {
+    let navLinks = document.querySelectorAll(".w3-bar-item");
+
+    // ✅ Función para resaltar el enlace activo
+    function setActiveLink(link) {
+        navLinks.forEach(item => item.classList.remove("w3-text-teal")); // Remueve la clase de todos
+        link.classList.add("w3-text-teal"); // Agrega la clase al enlace activo
+    }
+
+    // ✅ Evento de clic para resaltar el enlace seleccionado
+    navLinks.forEach(link => {
+        link.addEventListener("click", function () {
+            setActiveLink(this);
+        });
+    });
+
+    // ✅ Evento de scroll para resaltar el enlace según la sección visible
+    window.addEventListener("scroll", function () {
+        let sections = document.querySelectorAll("section"); // Asegúrate de que cada sección tiene un ID
+        let scrollPosition = window.scrollY;
+
+        sections.forEach((section, index) => {
+            let rect = section.getBoundingClientRect();
+            if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+                setActiveLink(navLinks[index]); // Resalta el enlace del menú correspondiente
+            }
+        });
+    });
+});
+
+
 </script>
 
 </body>
