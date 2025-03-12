@@ -176,77 +176,61 @@ function obtenerNombreUsuario(email) {
   </div>
   <br>
   <div class="container">
-    <h1>Documentación del Script</h1>
-    <p>Este script configura la lógica de salto en un formulario de Google Forms basado en las respuestas a una pregunta específica.</p>
-
+    <h1>Documentación: Configuración de Lógica de Salto en Formularios</h1>
+    <p>Este script configura la lógica de salto en un formulario de Google Forms, permitiendo que ciertas respuestas redirijan a secciones específicas.</p>
+    
+    <h2>Descripción</h2>
+    <p>El script busca una pregunta específica de tipo "Opción múltiple" y asigna la navegación a diferentes secciones del formulario según las respuestas seleccionadas.</p>
+    
     <h2>Funcionamiento</h2>
-    <p>El script:</p>
     <ul>
-        <li>Busca una pregunta específica en el formulario.</li>
-        <li>Asigna una lógica de salto dependiendo de las respuestas.</li>
-        <li>Redirige a diferentes secciones según la respuesta seleccionada.</li>
+        <li>Busca la pregunta clave especificada en <code>BUSCAR_TITULO</code>.</li>
+        <li>Asocia cada respuesta con una sección específica si está definida en <code>SECCIONES_DESTINO</code>.</li>
+        <li>Si no hay una sección definida, la opción continuará normalmente sin cambios.</li>
     </ul>
-
-    <h2>Parámetros</h2>
-    <ul>
-        <li><strong>formId</strong>: ID del formulario de Google Forms.</li>
-    </ul>
-
+    
     <h2>Código</h2>
-    <code>
-function configurarLogicaDeSalto(formId = "1ZspkEQGtga8GSndc7PELRK4IMUjgMRfZDndONPzLEX4") {
+    <pre>
+function configurarLogicaDeSalto(formId = "FORM_ID") {
 var FORM_ID = formId;
-var BUSCAR_TITULO = "¿Qué tipo de cotización es?"; 
+var BUSCAR_TITULO = "¿Qué tipo de cotización es?";
 var SECCIONES_DESTINO = { "Oferta": "Ajustess", "Pre-oferta": "INVERSORES" };
 var form = FormApp.openById(FORM_ID);
 var items = form.getItems();
 var preguntaItem = null;
-Logger.log("🔍 Buscando la pregunta clave en el formulario...");
 
 for (var i = 0; i < items.length; i++) {
-var item = items[i];
-if (item.getType() === FormApp.ItemType.MULTIPLE_CHOICE && item.getTitle() === BUSCAR_TITULO) {
-  preguntaItem = item.asMultipleChoiceItem();
-  Logger.log("🎯 ¡Pregunta encontrada!: " + BUSCAR_TITULO);
-  break;
+    var item = items[i];
+    if (item.getType() === FormApp.ItemType.MULTIPLE_CHOICE && item.getTitle() === BUSCAR_TITULO) {
+        preguntaItem = item.asMultipleChoiceItem();
+        break;
+    }
 }
-}
-
-if (!preguntaItem) {
-Logger.log("⚠️ No se encontró la pregunta en el formulario.");
-return;
-}
+if (!preguntaItem) return;
 
 var choices = preguntaItem.getChoices();
 var nuevasOpciones = [];
 
 choices.forEach(choice => {
-var textoRespuesta = choice.getValue();
-var destinoTitulo = SECCIONES_DESTINO[textoRespuesta];
-if (!destinoTitulo) {
-  nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, FormApp.PageNavigationType.CONTINUE));
-  return;
-}
-
-try {
-  var destino = form.getItems(FormApp.ItemType.PAGE_BREAK)
-    .map(item => item.asPageBreakItem())
-    .find(page => page.getTitle() === destinoTitulo);
-
-  if (!destino) {
-    nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, FormApp.PageNavigationType.CONTINUE));
-  } else {
-    nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, destino));
-  }
-} catch (error) {
-  nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, FormApp.PageNavigationType.CONTINUE));
-}
+    var textoRespuesta = choice.getValue();
+    var destinoTitulo = SECCIONES_DESTINO[textoRespuesta];
+    var destino = form.getItems(FormApp.ItemType.PAGE_BREAK)
+        .map(item => item.asPageBreakItem())
+        .find(page => page.getTitle() === destinoTitulo);
+    
+    nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, destino || FormApp.PageNavigationType.CONTINUE));
 });
 
 preguntaItem.setChoices(nuevasOpciones);
-Logger.log("✅ Lógica de salto configurada correctamente.");
 }
-    </code>
+    </pre>
+    
+    <h2>Consideraciones</h2>
+    <ul>
+        <li>Asegúrate de que las secciones del formulario tienen los mismos títulos especificados en <code>SECCIONES_DESTINO</code>.</li>
+        <li>El script solo funciona con preguntas de opción múltiple.</li>
+        <li>Si una respuesta no tiene una sección definida, continuará sin cambios.</li>
+    </ul>
 </div>
 
 
