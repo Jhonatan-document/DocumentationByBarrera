@@ -125,50 +125,129 @@
     </div>
     <br>    
 
-    <div class="container" id="List">
-        <h1>Documentación del Código - Generación de Formularios con Apps Script</h1>
-        
-        <div class="section">
-            <h2>Descripción General</h2>
-            <p>Este script de Google Apps Script permite la creación y modificación de formularios de Google Forms basados en datos de una hoja de cálculo en Google Sheets.</p>
-        </div>
-        
-        <div class="section">
-            <h2>Función Principal</h2>
-            <p><strong>updateExistingFormV2(formId, spreadsheetId)</strong></p>
-            <p>Esta función abre un formulario de Google Forms y una hoja de cálculo de Google Sheets, luego actualiza el formulario con las secciones y preguntas necesarias.</p>
-            <pre>
-    function updateExistingFormV2(formId, spreadsheetId) {
-    var form = FormApp.openById(formId);
-    var sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName('Validaciones');
-    var data = sheet.getRange('A2:P').getValues();
-    
-    form.setTitle('COTIZADOR CELSIA 2.0');
-    form.setDescription('Este cotizador cuenta con un alcance de ofertas EPC entre 5kWp y 130kWp.');
-    
-    addBasicInfo(form);
-    addCommercialInfo(form, data);
-    addClientInfo(form);
-    addTechnicalClientInfo(form, data);
-    addTechnicalInfo(form, data);
-    addAdjustments(form);
-    addInverterInfo(form, data);
-}
-            </pre>
-        </div>
+  <div class="container" id="Lista">
+      <h1>Documentación del Script</h1>
+      
+      <div class="section">
+          <h2>Descripción General</h2>
+          <p>Este script actualiza automáticamente las opciones de las preguntas de tipo lista desplegable en un formulario de Google Forms, basándose en datos de una hoja de Google Sheets.</p>
+      </div>
 
-        <div class="section">
-            <h2>Funciones Auxiliares</h2>
-            <p><strong>addBasicInfo(form)</strong>: Agrega preguntas básicas como correo y contraseña.</p>
-            <p><strong>addCommercialInfo(form, data)</strong>: Agrega información comercial desde la hoja de cálculo.</p>
-            <p><strong>addClientInfo(form)</strong>: Agrega información del cliente.</p>
-            <p><strong>addTechnicalClientInfo(form, data)</strong>: Agrega preguntas técnicas del cliente.</p>
-            <p><strong>addTechnicalInfo(form, data)</strong>: Agrega preguntas técnicas generales.</p>
-            <p><strong>addAdjustments(form)</strong>: Agrega ajustes al formulario.</p>
-            <p><strong>addInverterInfo(form, data)</strong>: Agrega información sobre inversores.</p>
-        </div>
-    </div>
-    <br>
+      <div class="section">
+          <h2>Funciones Principales</h2>
+          <h3>updateAllDropdownsWithLog()</h3>
+          <p>Esta función toma un ID de formulario y un ID de hoja de cálculo, y actualiza las preguntas tipo lista desplegable con los datos de la hoja de validaciones.</p>
+          <pre>
+function updateAllDropdownsWithLog(formId, spreadsheetId, sheetName, logSheetName)
+          </pre>
+          <p><strong>Parámetros:</strong></p>
+          <ul>
+              <li><code>formId</code>: ID del formulario de Google Forms.</li>
+              <li><code>spreadsheetId</code>: ID de la hoja de Google Sheets.</li>
+              <li><code>sheetName</code>: Nombre de la hoja que contiene las opciones.</li>
+              <li><code>logSheetName</code>: Nombre de la hoja de bitácora donde se registran los cambios.</li>
+          </ul>
+      </div>
+
+      <div class="section">
+          <h2>Registro de Cambios</h2>
+          <p>El script compara las opciones actuales de cada lista desplegable con las opciones en la hoja de cálculo. Si hay cambios, los registra en una hoja de bitácora con la siguiente estructura:</p>
+          <ul>
+              <li>Fecha</li>
+              <li>Pregunta</li>
+              <li>Tipo de Cambio (Creado, Modificado, Eliminado)</li>
+              <li>Opciones Antes</li>
+              <li>Opciones Después</li>
+              <li>Ejecutado por</li>
+          </ul>
+      </div>
+
+      <div class="section">
+          <h2>Función de Obtención de Nombre</h2>
+          <h3>obtenerNombreUsuario()</h3>
+          <p>Extrae el nombre del usuario a partir del correo electrónico:</p>
+          <pre>
+function obtenerNombreUsuario(email) {
+  var nombre = email.split("@")[0];
+  return nombre.charAt(0).toUpperCase() + nombre.slice(1);
+ }
+          </pre>
+      </div>
+  </div>
+  <br>
+  <div class="container">
+    <h1>Documentación del Script</h1>
+    <p>Este script configura la lógica de salto en un formulario de Google Forms basado en las respuestas a una pregunta específica.</p>
+
+    <h2>Funcionamiento</h2>
+    <p>El script:</p>
+    <ul>
+        <li>Busca una pregunta específica en el formulario.</li>
+        <li>Asigna una lógica de salto dependiendo de las respuestas.</li>
+        <li>Redirige a diferentes secciones según la respuesta seleccionada.</li>
+    </ul>
+
+    <h2>Parámetros</h2>
+    <ul>
+        <li><strong>formId</strong>: ID del formulario de Google Forms.</li>
+    </ul>
+
+    <h2>Código</h2>
+    <code>
+function configurarLogicaDeSalto(formId = "1ZspkEQGtga8GSndc7PELRK4IMUjgMRfZDndONPzLEX4") {
+var FORM_ID = formId;
+var BUSCAR_TITULO = "¿Qué tipo de cotización es?"; 
+var SECCIONES_DESTINO = { "Oferta": "Ajustess", "Pre-oferta": "INVERSORES" };
+var form = FormApp.openById(FORM_ID);
+var items = form.getItems();
+var preguntaItem = null;
+Logger.log("🔍 Buscando la pregunta clave en el formulario...");
+
+for (var i = 0; i < items.length; i++) {
+var item = items[i];
+if (item.getType() === FormApp.ItemType.MULTIPLE_CHOICE && item.getTitle() === BUSCAR_TITULO) {
+  preguntaItem = item.asMultipleChoiceItem();
+  Logger.log("🎯 ¡Pregunta encontrada!: " + BUSCAR_TITULO);
+  break;
+}
+}
+
+if (!preguntaItem) {
+Logger.log("⚠️ No se encontró la pregunta en el formulario.");
+return;
+}
+
+var choices = preguntaItem.getChoices();
+var nuevasOpciones = [];
+
+choices.forEach(choice => {
+var textoRespuesta = choice.getValue();
+var destinoTitulo = SECCIONES_DESTINO[textoRespuesta];
+if (!destinoTitulo) {
+  nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, FormApp.PageNavigationType.CONTINUE));
+  return;
+}
+
+try {
+  var destino = form.getItems(FormApp.ItemType.PAGE_BREAK)
+    .map(item => item.asPageBreakItem())
+    .find(page => page.getTitle() === destinoTitulo);
+
+  if (!destino) {
+    nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, FormApp.PageNavigationType.CONTINUE));
+  } else {
+    nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, destino));
+  }
+} catch (error) {
+  nuevasOpciones.push(preguntaItem.createChoice(textoRespuesta, FormApp.PageNavigationType.CONTINUE));
+}
+});
+
+preguntaItem.setChoices(nuevasOpciones);
+Logger.log("✅ Lógica de salto configurada correctamente.");
+}
+    </code>
+</div>
 
 
   
